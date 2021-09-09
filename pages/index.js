@@ -28,15 +28,12 @@ const Cell = ({ x, y, type }) => {
         return {
           backgroundColor: "yellowgreen",
           borderRadius: 8,
-          padding: 2,
         };
 
       case CellType.Food:
         return {
           backgroundColor: "darkorange",
           borderRadius: 20,
-          width: 32,
-          height: 32,
         };
 
       default:
@@ -83,8 +80,14 @@ const Snake = () => {
     const runSingleStep = () => {
       setSnake((snake) => {
         const head = snake[0];
-        const newHead = { x: head.x + direction.x, y: head.y + direction.y };
-
+        const newHead = { x: (head.x + direction.x) % Config.width, y: (head.y + direction.y) % Config.height };
+        // handling negative value of x and y
+        if(newHead.x < 0){
+          newHead.x = newHead.x + Config.width;
+        }
+        if(newHead.y < 0){
+          newHead.y = newHead.y + Config.height;
+        }
         // make a new snake by extending head
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
         const newSnake = [newHead, ...snake];
