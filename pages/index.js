@@ -125,20 +125,46 @@ const Snake = () => {
   useEffect(() => {
     const handleNavigation = (event) => {
       switch (event.key) {
+        // To allow the snake to change direction only at right angles,
+        // we have to set the direction based on previous state
         case "ArrowUp":
-          setDirection(Direction.Top);
+          setDirection((prevDirection) =>{
+            if(prevDirection === Direction.Bottom){
+              return Direction.Bottom;
+            }
+            return Direction.Top;
+          })
+          // setDirection(Direction.Top);
           break;
 
         case "ArrowDown":
-          setDirection(Direction.Bottom);
+          setDirection((prevDirection) =>{
+            if(prevDirection === Direction.Top){
+              return Direction.Top;
+            }
+            return Direction.Bottom;
+          })
+          // setDirection(Direction.Bottom);
           break;
 
         case "ArrowLeft":
-          setDirection(Direction.Left);
+          setDirection((prevDirection) =>{
+            if(prevDirection === Direction.Right){
+              return Direction.Right;
+            }
+            return Direction.Left;
+          })
+          // setDirection(Direction.Left);
           break;
 
         case "ArrowRight":
-          setDirection(Direction.Right);
+          setDirection((prevDirection) =>{
+            if(prevDirection === Direction.Left){
+              return Direction.Left;
+            }
+            return Direction.Right;
+          })
+          // setDirection(Direction.Right);
           break;
       }
     };
