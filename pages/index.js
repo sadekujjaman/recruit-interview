@@ -57,7 +57,7 @@ const Cell = ({ x, y, type }) => {
 
 const getRandomCell = () => ({
   x: Math.floor(Math.random() * Config.width),
-  y: 10,
+  y: Math.floor(Math.random() * Config.height),
 });
 
 const Snake = () => {
@@ -72,10 +72,15 @@ const Snake = () => {
   const [snake, setSnake] = useState(getDefaultSnake());
   const [direction, setDirection] = useState(Direction.Right);
 
-  const [food, setFood] = useState({ x: 4, y: 10 });
+  // const [food, setFood] = useState({ x: 4, y: 10 });
   const [score, setScore] = useState(0);
-  
-  
+
+
+  const initialFoods = [
+    {x : 5, y: 4, time:Date.now()}
+  ]
+  const[foods, setFoods] = useState(initialFoods)
+
     // update score whenever head touches a food
     useEffect(() => {
       const head = snake[0];
@@ -91,12 +96,12 @@ const Snake = () => {
           return prevScore + 1;
         });
   
-        let newFood = getRandomCell();
-        while (isSnake(newFood)) {
-          newFood = getRandomCell();
-        }
+        // let newFood = getRandomCell();
+        // while (isSnake(newFood)) {
+        //   newFood = getRandomCell();
+        // }
   
-        setFood(newFood);
+        // setFood(newFood);
       }
       else{
         snake.pop();
@@ -136,7 +141,7 @@ const Snake = () => {
     const timer = setInterval(runSingleStep, 500);
 
     return () => clearInterval(timer);
-  }, [direction, food]);
+  }, [direction]);
 
 
   useEffect(() => {
@@ -186,9 +191,35 @@ const Snake = () => {
     return () => window.removeEventListener("keydown", handleNavigation);
   }, []);
 
+
+  useEffect(() =>{
+    const addFoodInterval = setInterval(()=>{
+      setFoods((prevFoods) =>{
+        const newFood = getFood()
+        return [...prevFoods, newFood]
+      })
+    }, 3000)
+
+    return () => clearInterval(addFoodInterval)
+
+  }, [])
+
+  useEffect(() =>{
+
+    const removeFoodInterval = setInterval(()=>{
+      setFoods(prevFoods => prevFoods.filter(item => Date.now() - item.time < 10000 ))
+    }, 1000)
+
+    return () => clearInterval(removeFoodInterval)
+
+  }, [])
+
   // ?. is called optional chaining
   // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
-  const isFood = ({ x, y }) => food?.x === x && food?.y === y;
+  // const isFood = ({ x, y }) => food?.x === x && food?.y === y;
+
+  const isFood = ({ x, y }) => 
+    foods.find((food) => food.x === x && food.y === y)
 
   const isSnake = ({ x, y }) =>
     snake.find((position) => position.x === x && position.y === y);
@@ -210,6 +241,15 @@ const Snake = () => {
       }
       return true
   }
+
+  const getFood = () => {
+    let newFood = getRandomCell();
+    while (isSnake(newFood) || isFood(newFood)) {
+      newFood = getRandomCell();
+    }
+    return {x : newFood.x, y:newFood.y, time:Date.now()}
+  }
+
   const cells = [];
   for (let x = 0; x < Config.width; x++) {
     for (let y = 0; y < Config.height; y++) {
