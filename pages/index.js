@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useReducer } from "react";
 import styles from "../styles/Snake.module.css";
 
 const Config = {
@@ -57,7 +57,7 @@ const Cell = ({ x, y, type }) => {
 
 const getRandomCell = () => ({
   x: Math.floor(Math.random() * Config.width),
-  y: Math.floor(Math.random() * Config.width),
+  y: 10,
 });
 
 const Snake = () => {
@@ -70,17 +70,77 @@ const Snake = () => {
 
   // snake[0] is head and snake[snake.length - 1] is tail
   const [snake, setSnake] = useState(getDefaultSnake());
-  const [direction, setDirection] = useState(Direction.Right);
+  // const [direction, setDirection] = useState(Direction.Right);
 
   const [food, setFood] = useState({ x: 4, y: 10 });
-  const [score, setScore] = useState(0);
+  // const [score, setScore] = useState(0);
+  
+  const gameProp = {
+    score: 0, 
+    direction: Direction.Right,
+  }
+  const reducer = (state, action)=>{
+    switch(action.type){
+      case 'score':
+        console.log(action)
+        return {...state, score: state.score + 1}
+      case 'direction':
+        console.log(action)
+        if(possibleMove(state.direction, action.dir)){
+          return {...state, direction:action.dir}
+        }
+        return state
+      default:
+        return state
+    }
+  }
+  const possibleMove = (prevDirection, newDirection) =>{
+    if(
+      (prevDirection === Direction.Top && newDirection === Direction.Bottom) ||
+      (prevDirection === Direction.Bottom && newDirection === Direction.Top) ||
+      (prevDirection === Direction.Left && newDirection === Direction.Right) ||
+      (prevDirection === Direction.Right && newDirection === Direction.Left)
+      ){
+      return false;
+    }
+    return true;
+  }
+  const[gameController, gamePropDispatch] = useReducer(reducer, gameProp)
+  
+    // update score whenever head touches a food
+    useEffect(() => {
+      console.log("Snake changed")
+      const head = snake[0];
+      if (isFood(head)) {
+        // setScore((score) => {
+        //   return score + 1;
+        // });
+        
+        gamePropDispatch({type:'score'})
+  
+        let newFood = getRandomCell();
+        while (isSnake(newFood)) {
+          newFood = getRandomCell();
+        }
+  
+        setFood(newFood);
+      }
+      else{
+        snake.pop();
+      }
+    }, [snake]);
+  
 
   // move the snake
   useEffect(() => {
+    console.log(gameController)
     const runSingleStep = () => {
       setSnake((snake) => {
         const head = snake[0];
-        const newHead = { x: (head.x + direction.x) % Config.width, y: (head.y + direction.y) % Config.height };
+        const newHead = { 
+          x: (head.x + gameController.direction.x) % Config.width, 
+          y: (head.y + gameController.direction.y) % Config.height 
+        };
         // handling negative value of x and y
         if(newHead.x < 0){
           newHead.x = newHead.x + Config.width;
@@ -93,7 +153,7 @@ const Snake = () => {
         const newSnake = [newHead, ...snake];
 
         // remove tail
-        newSnake.pop();
+        // newSnake.pop();
 
         return newSnake;
       });
@@ -103,24 +163,8 @@ const Snake = () => {
     const timer = setInterval(runSingleStep, 500);
 
     return () => clearInterval(timer);
-  }, [direction, food]);
+  }, [gameController, food]);
 
-  // update score whenever head touches a food
-  useEffect(() => {
-    const head = snake[0];
-    if (isFood(head)) {
-      setScore((score) => {
-        return score + 1;
-      });
-
-      let newFood = getRandomCell();
-      while (isSnake(newFood)) {
-        newFood = getRandomCell();
-      }
-
-      setFood(newFood);
-    }
-  }, [snake]);
 
   useEffect(() => {
     const handleNavigation = (event) => {
@@ -128,43 +172,19 @@ const Snake = () => {
         // To allow the snake to change direction only at right angles,
         // we have to set the direction based on previous state
         case "ArrowUp":
-          setDirection((prevDirection) =>{
-            if(prevDirection === Direction.Bottom){
-              return Direction.Bottom;
-            }
-            return Direction.Top;
-          })
-          // setDirection(Direction.Top);
+          gamePropDispatch({type:'direction', dir:Direction.Top})
           break;
 
         case "ArrowDown":
-          setDirection((prevDirection) =>{
-            if(prevDirection === Direction.Top){
-              return Direction.Top;
-            }
-            return Direction.Bottom;
-          })
-          // setDirection(Direction.Bottom);
+          gamePropDispatch({type:'direction', dir:Direction.Bottom})
           break;
 
         case "ArrowLeft":
-          setDirection((prevDirection) =>{
-            if(prevDirection === Direction.Right){
-              return Direction.Right;
-            }
-            return Direction.Left;
-          })
-          // setDirection(Direction.Left);
+          gamePropDispatch({type:'direction', dir:Direction.Left})
           break;
 
         case "ArrowRight":
-          setDirection((prevDirection) =>{
-            if(prevDirection === Direction.Left){
-              return Direction.Left;
-            }
-            return Direction.Right;
-          })
-          // setDirection(Direction.Right);
+          gamePropDispatch({type:'direction', dir:Direction.Right})
           break;
       }
     };
@@ -199,7 +219,7 @@ const Snake = () => {
         className={styles.header}
         style={{ width: Config.width * Config.cellSize }}
       >
-        Score: {score}
+        Score: {gameController.score}
       </div>
       <div
         className={styles.grid}
