@@ -25,7 +25,9 @@ test("Example 1: return names of all subordinates of person", () => {
 // => 2 not done
 // return company name from email address
 const exercise11 = (email) => {
-  return email.substr(email.lastIndexOf("@") + 1)
+  const idx1 = email.lastIndexOf("@")
+  const idx2 = email.lastIndexOf(".")
+  return email.substr(idx1 + 1, idx2 - idx1 - 1)
 };
 
 test("Exercise 1.1: return company name from email address", () => {
