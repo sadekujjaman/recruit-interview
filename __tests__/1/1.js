@@ -214,7 +214,27 @@ test("Example 5: return total number of people in the dataset", () => {
 });
 // => 15 not done
 // given a color, return number of people who have that eye color
-const exercise51 = (color) => {};
+const exercise51 = (color) => {
+  const getTotalPeopleWithColor = (person) =>{
+    // person.subordinates.filter((subordinate) => getTotalPeopleWithColor(subordinate))
+    // .reduce((total, employees) => total + employees, 0);
+    // let sum = person.eyeColor === color ? 1 : 0;
+    // if(person.subordinates.length == 0){
+    //   return sum
+    // }
+    
+    // for(let i = 0; i < person.subordinates.length; i++){
+    //   sum += getTotalPeopleWithColor(person.subordinates[i])
+    // }
+    // return sum;
+    let flag = person.eyeColor === color ? 1 : 0
+    return flag + person.subordinates
+      .map((subordinate) => getTotalPeopleWithColor(subordinate))
+      .reduce((total, items) => total + items, 0)
+
+  }
+  return getTotalPeopleWithColor(CruzHarrell)
+};
 
 test("Exercise 5.1: given a color, return number of people who have that eye color", () => {
   expect(exercise51("green")).toEqual(11);
@@ -235,7 +255,28 @@ test("distance: given two locations, return the distance between them", () => {
 });
 // => 17 not done
 // given maxDistance, return number of employees who lives within maxDistance distance of their managers
-const exercise52 = (maxDistance) => {};
+const exercise52 = (maxDistance) => {
+  const getEmployeesWithMaxDistance = (person) =>{
+    // return flag + person.subordinates
+    //   .map((subordinate) => getEmployeesWithMaxDistance(subordinate))
+    //   .reduce((total, items) => total + items, 0)
+    let sum = 0;
+    if(person.subordinates.length == 0){
+      return sum
+    }
+    for(let i = 0; i < person.subordinates.length; i++){
+      if(distance(person.location, person.subordinates[i].location) <= maxDistance){
+        sum += 1 + getEmployeesWithMaxDistance(person.subordinates[i]);
+      }
+      else{
+        sum += 0 + getEmployeesWithMaxDistance(person.subordinates[i]);
+      }
+    }
+    return sum;
+
+  }
+  return getEmployeesWithMaxDistance(CruzHarrell)
+};
 
 test("Exercise 5.2: given maxDistance, return number of employees who lives within maxDistance distance of their managers", () => {
   expect(exercise52(5)).toEqual(25);
@@ -244,7 +285,25 @@ test("Exercise 5.2: given maxDistance, return number of employees who lives with
 // => 18 not done
 // return first name (not full name) of all person who has the same company as their manager
 // hint: exercise11
-const exercise53 = () => {};
+const exercise53 = () => {
+  let arr = []
+  const getEmployeesInSameCompanyWithManager = (person) =>{
+    if(person.subordinates.length == 0){
+      return
+    }
+    for(let i = 0; i < person.subordinates.length; i++){
+      if(exercise11(person.email) === exercise11(person.subordinates[i].email)){
+        const name = person.subordinates[i].name
+        arr.push(name.substr(0, name.lastIndexOf(" ")))
+      } 
+      getEmployeesInSameCompanyWithManager(person.subordinates[i]);
+      
+    }
+    
+  }
+  getEmployeesInSameCompanyWithManager(CruzHarrell)
+  return arr
+};
 
 test("Exercise 5.3: return first name (not full name) of all person who has the same company as their manager", () => {
   expect(exercise53()).toEqual(["Suzanne", "Gregory", "Buchanan"]);
