@@ -4,7 +4,7 @@ import styles from "../styles/Snake.module.css";
 
 const Config = {
   height: 25,
-  width: 10,
+  width: 25,
   cellSize: 32,
 };
 
@@ -66,44 +66,55 @@ const Snake = () => {
     { x: 7, y: 12 },
     { x: 6, y: 12 },
   ];
-  const grid = useRef();
 
-  // snake[0] is head and snake[snake.length - 1] is tail
-  const [snake, setSnake] = useState(getDefaultSnake());
-  const [direction, setDirection] = useState(Direction.Right);
-
-  // const [food, setFood] = useState({ x: 4, y: 10 });
-  const [score, setScore] = useState(0);
-
-
-  const initialFoods = [
+  const INITIAL_FOODS = [
     {x : 5, y: 4, time:Date.now()}
   ]
-  const[foods, setFoods] = useState(initialFoods)
 
-  const[last, setLast] = useState({x : -1, y: -1})
+  const INITIAL_DIRECTION = Direction.Right;
+  const INITIAL_SCORE = 0;
+  const FOOD_ADD_TIME_INTERVAL = 3000;
+  const FOOD_REMOVE_TIME_INTERVAL = 10000;
+  const SCORE_INCREMENT = 1;
+  const SNAKE_SPEED = 500; // 500 ms
 
+  const grid = useRef();
+
+  // set up the initial game properties.
+  // snake[0] is head and snake[snake.length - 1] is tail
+  const [snake, setSnake] = useState(getDefaultSnake());
+  const [direction, setDirection] = useState(INITIAL_DIRECTION);
+  const [score, setScore] = useState(INITIAL_SCORE);
+  const[foods, setFoods] = useState(INITIAL_FOODS)
+  const[lastRemovedTail, setLastRemovedTail] = useState({x : -1, y: -1})
+
+  // sets the neccessary behaviours when restarts the game.
+  const restartGame = () =>{
+    setSnake(getDefaultSnake());
+    setScore(INITIAL_SCORE);
+    setDirection(INITIAL_DIRECTION)
+    setFoods(INITIAL_FOODS)
+  }
     // update score whenever head touches a food
     useEffect(() => {
       const head = snake[0];
+      // Handling snake collision (When the snake touches itself).
+      // If any collision happen, it restarts the game.
       if(isCollide(head)){
-        console.log("Possibility to collide")
-        setSnake(getDefaultSnake());
-        setScore(0);
-        setDirection(Direction.Right)
-        setFoods(initialFoods)
+        restartGame()
         return;
       }
+      // Handling food eating behavior of the snake.
+      // If the snake eats a food, increments score, removes eating food from the grid,
+      // increase the snake size by one(it can be achieved by 
+      // adding the last removed tail element)
       if (isFood(head)) {
         setScore((prevScore) => {
-          return prevScore + 1;
+          return prevScore + SCORE_INCREMENT;
         });
         setFoods(prevFoods => prevFoods.filter(item => item.x !== head.x && item.y !== head.y ))
-        const newSnake = [...snake, last]
+        const newSnake = [...snake, lastRemovedTail]
         setSnake(prevSnake => newSnake)
-      }
-      else{
-        // snake.pop();
       }
     }, [snake]);
   
@@ -113,36 +124,38 @@ const Snake = () => {
     const runSingleStep = () => {
       setSnake((snake) => {
         const head = snake[0];
+        // Calculate the new head for next move of the snake.
+        // Also make the snake reappear from the opposite direction when 
+        // it crosses the grid boundary.(Calculate modulus of x and y) 
+        // Adding Config property(width or height) for handling negative 
+        // value(snake moving left or up).
         const newHead = { 
-          x: (head.x + direction.x) % Config.width, 
-          y: (head.y + direction.y) % Config.height 
+          x: (head.x + direction.x + Config.width) % Config.width, 
+          y: (head.y + direction.y + Config.height) % Config.height 
         };
-        // handling negative value of x and y
-        if(newHead.x < 0){
-          newHead.x = newHead.x + Config.width;
-        }
-        if(newHead.y < 0){
-          newHead.y = newHead.y + Config.height;
-        }
-       
         // make a new snake by extending head
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
         const newSnake = [newHead, ...snake];
 
-        // remove tail
-        setLast(newSnake.pop());
+        // removing the tail to make the snake move forward.
+        let tail = newSnake.pop();
+        // store the tail for future use to increase the snake size when it eats food.
+        setLastRemovedTail(tail);
 
         return newSnake;
       });
     };
 
     runSingleStep();
-    const timer = setInterval(runSingleStep, 500);
+    const timer = setInterval(runSingleStep, SNAKE_SPEED);
 
     return () => clearInterval(timer);
   }, [direction]);
 
 
+  // Setting key event(arrow key) for moving the snake in the grid.
+  // Four type of moving -> left, right, up and down. Each type of move
+  // can be achieved by pressing respective arrow key.
   useEffect(() => {
     const handleNavigation = (event) => {
       switch (event.key) {
@@ -190,41 +203,44 @@ const Snake = () => {
     return () => window.removeEventListener("keydown", handleNavigation);
   }, []);
 
-
+  // setting an interval to add food.
+  // Adding food every FOOD_ADD_TIME_INTERVAL time.
   useEffect(() =>{
     const addFoodInterval = setInterval(()=>{
       setFoods((prevFoods) =>{
         const newFood = getFood()
         return [...prevFoods, newFood]
       })
-    }, 3000)
+    }, FOOD_ADD_TIME_INTERVAL)
 
     return () => clearInterval(addFoodInterval)
 
   }, [])
 
+  // setting an interval to remove food.
+  // Removing foods after FOOD_REMOVE_TIME_INTERVAL time.
   useEffect(() =>{
-
     const removeFoodInterval = setInterval(()=>{
-      setFoods(prevFoods => prevFoods.filter(item => Date.now() - item.time < 10000 ))
+      setFoods(prevFoods => prevFoods.filter(item => Date.now() - item.time < FOOD_REMOVE_TIME_INTERVAL ))
     }, 1000)
-
     return () => clearInterval(removeFoodInterval)
-
   }, [])
 
   // ?. is called optional chaining
   // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
-  // const isFood = ({ x, y }) => food?.x === x && food?.y === y;
 
+  // Returns whether the cell/object {x, y} is occupied by food cell or not.
   const isFood = ({ x, y }) => 
     foods.find((food) => food.x === x && food.y === y)
 
+  // Returns whether the cell/object {x, y} is occupied by food cell or not.
   const isSnake = ({ x, y }) =>
     snake.find((position) => position.x === x && position.y === y);
 
-  const getIndexOf = (snake, head) =>{
-    for(let i = 1; i < snake.length; i++){
+  // Returns the index of head (an object {x, y}) inside the snake array
+  // starting from the startIndex position. 
+  const getIndexOf = (startIndex, snake, head) =>{
+    for(let i = startIndex; i < snake.length; i++){
       const position = snake[i];
       if(position.x === head.x && position.y === head.y){
         return i;
@@ -233,16 +249,23 @@ const Snake = () => {
     return -1;
   }
 
+  // Checking if the snake has collided with itself. 
+  // The idea is, we are checking whether the head cell already placed
+  // or not in the snake(excluded first valid head cell) 
   const isCollide = (head) =>{
-      const idx = getIndexOf(snake, head)
+      const idx = getIndexOf(1, snake, head)
       if(idx === -1){
         return false
       }
       return true
   }
 
+  // returns an object{x, y, time} as food cell.
   const getFood = () => {
+    // get random cell first
     let newFood = getRandomCell();
+    // checking whether the cell is already occupied by snake cell or another food cell.
+    // and searching for an empty cell which we can placed food. 
     while (isSnake(newFood) || isFood(newFood)) {
       newFood = getRandomCell();
     }
