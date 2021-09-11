@@ -150,7 +150,14 @@ test("Exercise 3.2a: given a person, return difference between female and male s
 */
 // => 11 not done
 // implement map function
-const map = (array, func) => {};
+const map = (array, func) => {
+  const mapArray = []
+  for(let i = 0; i < array.length; i++){
+    const res = func(array[i], i, array)
+    mapArray.push(res)
+  }
+  return mapArray;
+};
 
 test("Exercise 4.1: implement map function", () => {
   const m1 = [Math.random(), Math.random(), Math.random(), Math.random()];
@@ -161,7 +168,16 @@ test("Exercise 4.1: implement map function", () => {
 });
 // => 12 not done
 // implement filter function
-const filter = (array, func) => {};
+const filter = (array, func) => {
+  const filterArray = []
+  for(let i = 0; i < array.length; i++){
+    const res = func(array[i], i, array)
+    if(res){
+      filterArray.push(array[i])
+    }
+  }
+  return filterArray;
+};
 
 test("Exercise 4.2: implement filter function", () => {
   const f1 = [
@@ -179,7 +195,13 @@ test("Exercise 4.2: implement filter function", () => {
 });
 // => 13 not done
 // implement reduce
-const reduce = (array, func, initalValue) => {};
+const reduce = (array, func, initalValue) => {
+  let accumulator = initalValue !== undefined ? initalValue : 0
+  for(let i = 0; i < array.length; i++){
+    accumulator = func(accumulator, array[i], i, array)
+  }
+  return accumulator;
+};
 
 test("Exercise 4.3: implement reduce function", () => {
   const r1 = [Math.random(), Math.random(), Math.random(), Math.random()];
