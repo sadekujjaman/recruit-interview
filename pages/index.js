@@ -74,7 +74,7 @@ const Snake = () => {
   const FOOD_ADD_TIME_INTERVAL = 3000;
   const FOOD_REMOVE_TIME_INTERVAL = 10000;
   const SCORE_INCREMENT = 1;
-  const SNAKE_SPEED = 100; // 500 ms
+  const SNAKE_SPEED = 500; // Interval time in ms to make the snake movable all the time.
 
   const grid = useRef();
 
