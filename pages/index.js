@@ -277,11 +277,12 @@ const Snake = () => {
   for (let x = 0; x < Config.width; x++) {
     for (let y = 0; y < Config.height; y++) {
       let type = CellType.Empty;
-      if (isFood({ x, y })) {
-        type = CellType.Food;
-      } else if (isSnake({ x, y })) {
+      if (isSnake({ x, y })) {
         type = CellType.Snake;
       }
+      else if (isFood({ x, y })) {
+        type = CellType.Food;
+      }  
       cells.push(<Cell key={`${x}-${y}`} x={x} y={y} type={type} />);
     }
   }
